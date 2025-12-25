@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const { PrismaClient } = require('@prisma/client');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const crypto = require('crypto');
 require('dotenv').config();
 
@@ -30,29 +30,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// Email configuration
-let transporter;
-try {
-  transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // Use STARTTLS
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS
-    },
-    tls: {
-      rejectUnauthorized: false
-    },
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 10000,
-    socketTimeout: 10000
-  });
-  console.log('Email transport configured');
-} catch (err) {
-  console.error('Failed to configure email transport:', err);
-  transporter = null;
-}
+// Email configuration with Resend
+const resend = new Resend(process.env.RESEND_API_KEY);
+console.log('Resend email client initialized');
 
 // Routes
 // 1. Get single visitor by ID
@@ -135,13 +115,14 @@ app.post('/api/visitor-request', async (req, res) => {
       }
     });
 
-    // Send email to resident if email transport is configured
-    if (transporter) {
+    // Send email to resident using Resend
+    if (resend) {
       try {
-        const backendUrl = process.env.BACKEND_URL || 'https://heedless-palingenetically-londa.ngrok-free.dev';
-        const mailOptions = {
-          from: process.env.EMAIL_USER || 'noreply@ivisitor.com',
-          to: newVisitor.residentEmail,
+        const backendUrl = process.env.BACKEND_URL || 'https://ivisitor.onrender.com';
+
+        await resend.emails.send({
+          from: 'iVisitor <onboarding@resend.dev>',
+          to: [newVisitor.residentEmail],
           subject: 'New Visitor Request - iVisitor',
           html: `
             <!DOCTYPE html>
@@ -184,16 +165,15 @@ app.post('/api/visitor-request', async (req, res) => {
             </body>
             </html>
           `
-        };
+        });
 
-        await transporter.sendMail(mailOptions);
         console.log('Email sent to resident:', newVisitor.residentEmail);
       } catch (emailErr) {
         console.error('Failed to send email, but continuing with visitor registration:', emailErr);
         // Continue with the registration even if email fails
       }
     } else {
-      console.log('Email transport not configured, skipping email notification');
+      console.log('Resend not configured, skipping email notification');
     }
     res.json(newVisitor);
   } catch (err) {
@@ -410,11 +390,11 @@ app.get('/api/approve/:id/:token', async (req, res) => {
       where: { id: parseInt(id) },
       data: { status: 'approved' }
     });
-    if (transporter) {
+    if (resend) {
       try {
-        await transporter.sendMail({
-          from: process.env.EMAIL_USER || 'noreply@ivisitor.com',
-          to: visitor.visitorEmail,
+        await resend.emails.send({
+          from: 'iVisitor <onboarding@resend.dev>',
+          to: [visitor.visitorEmail],
           subject: 'Visit Approved - Verification Code',
           html: `<h2>Your Visit Has Been Approved!</h2><p>Verification code: <strong style="font-size:24px;color:#10B981">${visitor.verificationCode}</strong></p><p>Show this code to the guard upon arrival.</p>`
         });
@@ -443,11 +423,11 @@ app.get('/api/reject/:id/:token', async (req, res) => {
       where: { id: parseInt(id) },
       data: { status: 'rejected' }
     });
-    if (transporter) {
+    if (resend) {
       try {
-        await transporter.sendMail({
-          from: process.env.EMAIL_USER || 'noreply@ivisitor.com',
-          to: visitor.visitorEmail,
+        await resend.emails.send({
+          from: 'iVisitor <onboarding@resend.dev>',
+          to: [visitor.visitorEmail],
           subject: 'Visit Request Update',
           html: `<h2>Visit Request Update</h2><p>Your visit request has not been approved at this time.</p>`
         });
