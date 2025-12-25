@@ -11,9 +11,20 @@ const app = express();
 
 // Middleware
 const corsOptions = {
-  origin: process.env.NODE_ENV === 'production'
-    ? [process.env.FRONTEND_URL, process.env.BACKEND_URL].filter(Boolean)
-    : '*',
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'https://i-visitor.vercel.app',
+      'https://ivisitor.onrender.com',
+      'http://localhost:5173',
+      'http://localhost:5000'
+    ];
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 };
 app.use(cors(corsOptions));
