@@ -2,13 +2,13 @@ import { useState, useEffect, useMemo } from 'react';
 import { toast } from 'react-hot-toast';
 import moment from 'moment';
 import { visitorService } from '../../services/api';
-import { 
-  CheckCircleIcon, 
-  XCircleIcon, 
-  MagnifyingGlassIcon, 
-  FunnelIcon, 
-  ArrowUpIcon, 
-  ArrowDownIcon, 
+import {
+  CheckCircleIcon,
+  XCircleIcon,
+  MagnifyingGlassIcon,
+  FunnelIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
   ArrowPathIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -23,7 +23,7 @@ export default function GuardDashboard() {
   const [verificationCode, setVerificationCode] = useState('');
   const [selectedVisitor, setSelectedVisitor] = useState(null);
   const [verifying, setVerifying] = useState(false);
-  
+
   // Search, sort, filter and pagination states
   const [searchTerm, setSearchTerm] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'visitorName', direction: 'asc' });
@@ -38,7 +38,7 @@ export default function GuardDashboard() {
     const interval = setInterval(fetchVisitors, 60000); // Refresh every minute
     return () => clearInterval(interval);
   }, []);
-  
+
   // Reset to first page when search or filter changes
   useEffect(() => {
     setCurrentPage(1);
@@ -123,11 +123,11 @@ export default function GuardDashboard() {
     }
     setSortConfig({ key, direction });
   };
-  
+
   // Filter and search function
   const filteredAndSearchedVisitors = useMemo(() => {
     let result = [...visitors];
-    
+
     // Apply status filter
     if (statusFilter !== 'all') {
       if (statusFilter === 'inside') {
@@ -138,7 +138,7 @@ export default function GuardDashboard() {
         result = result.filter(visitor => visitor.status === statusFilter);
       }
     }
-    
+
     // Apply date filter
     if (dateFilter.from) {
       const fromDate = new Date(dateFilter.from);
@@ -148,7 +148,7 @@ export default function GuardDashboard() {
         return visitDate && visitDate >= fromDate;
       });
     }
-    
+
     if (dateFilter.to) {
       const toDate = new Date(dateFilter.to);
       toDate.setHours(23, 59, 59, 999);
@@ -157,7 +157,7 @@ export default function GuardDashboard() {
         return visitDate && visitDate <= toDate;
       });
     }
-    
+
     // Apply search
     if (searchTerm) {
       const lowercasedSearch = searchTerm.toLowerCase();
@@ -169,7 +169,7 @@ export default function GuardDashboard() {
           visitor.residentEmail?.toLowerCase().includes(lowercasedSearch)
       );
     }
-    
+
     // Apply sorting
     if (sortConfig.key) {
       result.sort((a, b) => {
@@ -177,14 +177,14 @@ export default function GuardDashboard() {
         if (sortConfig.key === 'inDate' || sortConfig.key === 'outDate') {
           const aValue = a[sortConfig.key] ? new Date(a[sortConfig.key]).getTime() : 0;
           const bValue = b[sortConfig.key] ? new Date(b[sortConfig.key]).getTime() : 0;
-          
+
           if (sortConfig.direction === 'asc') {
             return aValue - bValue;
           } else {
             return bValue - aValue;
           }
         }
-        
+
         // Handle normal string/number sorting
         if (a[sortConfig.key] < b[sortConfig.key]) {
           return sortConfig.direction === 'asc' ? -1 : 1;
@@ -195,23 +195,23 @@ export default function GuardDashboard() {
         return 0;
       });
     }
-    
+
     return result;
   }, [visitors, searchTerm, sortConfig, statusFilter, dateFilter]);
-  
+
   // Pagination
   const totalPages = Math.ceil(filteredAndSearchedVisitors.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
   const currentItems = filteredAndSearchedVisitors.slice(indexOfFirstItem, indexOfLastItem);
-  
+
   // Pagination controls
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
   const goToFirstPage = () => setCurrentPage(1);
   const goToLastPage = () => setCurrentPage(totalPages);
   const goToPreviousPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
   const goToNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
-  
+
   // Reset filters
   const resetFilters = () => {
     setSearchTerm('');
@@ -220,7 +220,7 @@ export default function GuardDashboard() {
     setSortConfig({ key: 'visitorName', direction: 'asc' });
     setCurrentPage(1);
   };
-  
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -237,10 +237,10 @@ export default function GuardDashboard() {
             <h1 className="text-2xl font-bold text-gray-900">Guard Dashboard</h1>
             <p className="mt-1 text-sm text-gray-500">Manage visitor entries and exits</p>
           </div>
-          
+
           <div className="mt-4 md:mt-0 flex items-center">
-            <button 
-              onClick={fetchVisitors} 
+            <button
+              onClick={fetchVisitors}
               className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-indigo-700 bg-indigo-100 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               disabled={refreshing}
             >
@@ -249,7 +249,7 @@ export default function GuardDashboard() {
             </button>
           </div>
         </div>
-        
+
         {/* Search and Filter Controls */}
         <div className="mb-6">
           <div className="flex flex-col md:flex-row space-y-3 md:space-y-0 md:space-x-4">
@@ -266,7 +266,7 @@ export default function GuardDashboard() {
                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               />
             </div>
-            
+
             {/* Status Filter Dropdown */}
             <div className="w-full md:w-48">
               <select
@@ -282,7 +282,7 @@ export default function GuardDashboard() {
                 <option value="completed">Visit Completed</option>
               </select>
             </div>
-            
+
             {/* Filter Toggle Button */}
             <button
               type="button"
@@ -292,7 +292,7 @@ export default function GuardDashboard() {
               <FunnelIcon className="-ml-0.5 mr-2 h-4 w-4" aria-hidden="true" />
               {showFilters ? 'Hide Filters' : 'More Filters'}
             </button>
-            
+
             {/* Reset Filters */}
             <button
               type="button"
@@ -302,7 +302,7 @@ export default function GuardDashboard() {
               Clear All
             </button>
           </div>
-          
+
           {/* Advanced Filters */}
           {showFilters && (
             <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
@@ -332,7 +332,7 @@ export default function GuardDashboard() {
             </div>
           )}
         </div>
-        
+
         {/* Results Summary */}
         <div className="flex justify-between items-center mb-4">
           <p className="text-sm text-gray-700">
@@ -342,7 +342,7 @@ export default function GuardDashboard() {
             </span>{' '}
             of <span className="font-medium">{filteredAndSearchedVisitors.length}</span> results
           </p>
-          
+
           <div className="flex items-center">
             <label htmlFor="items-per-page" className="mr-2 text-sm text-gray-700">Show</label>
             <select
@@ -361,64 +361,64 @@ export default function GuardDashboard() {
             </select>
           </div>
         </div>
-        
+
         <div className="mt-5">
           <div className="overflow-x-auto shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
             <table className="min-w-full divide-y divide-gray-300">
               <thead className="bg-gray-50">
                 <tr>
-                  <th 
-                    scope="col" 
+                  <th
+                    scope="col"
                     className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 cursor-pointer"
                     onClick={() => requestSort('visitorName')}
                   >
                     <div className="flex items-center">
                       Visitor
                       {sortConfig.key === 'visitorName' && (
-                        sortConfig.direction === 'asc' 
-                          ? <ArrowUpIcon className="h-4 w-4 ml-1" /> 
+                        sortConfig.direction === 'asc'
+                          ? <ArrowUpIcon className="h-4 w-4 ml-1" />
                           : <ArrowDownIcon className="h-4 w-4 ml-1" />
                       )}
                     </div>
                   </th>
-                  <th 
-                    scope="col" 
+                  <th
+                    scope="col"
                     className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 cursor-pointer"
                     onClick={() => requestSort('residentName')}
                   >
                     <div className="flex items-center">
                       Resident
                       {sortConfig.key === 'residentName' && (
-                        sortConfig.direction === 'asc' 
-                          ? <ArrowUpIcon className="h-4 w-4 ml-1" /> 
+                        sortConfig.direction === 'asc'
+                          ? <ArrowUpIcon className="h-4 w-4 ml-1" />
                           : <ArrowDownIcon className="h-4 w-4 ml-1" />
                       )}
                     </div>
                   </th>
-                  <th 
-                    scope="col" 
+                  <th
+                    scope="col"
                     className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 cursor-pointer"
                     onClick={() => requestSort('status')}
                   >
                     <div className="flex items-center">
                       Status
                       {sortConfig.key === 'status' && (
-                        sortConfig.direction === 'asc' 
-                          ? <ArrowUpIcon className="h-4 w-4 ml-1" /> 
+                        sortConfig.direction === 'asc'
+                          ? <ArrowUpIcon className="h-4 w-4 ml-1" />
                           : <ArrowDownIcon className="h-4 w-4 ml-1" />
                       )}
                     </div>
                   </th>
-                  <th 
-                    scope="col" 
+                  <th
+                    scope="col"
                     className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 cursor-pointer"
                     onClick={() => requestSort('inDate')}
                   >
                     <div className="flex items-center">
                       Visit Date
                       {sortConfig.key === 'inDate' && (
-                        sortConfig.direction === 'asc' 
-                          ? <ArrowUpIcon className="h-4 w-4 ml-1" /> 
+                        sortConfig.direction === 'asc'
+                          ? <ArrowUpIcon className="h-4 w-4 ml-1" />
                           : <ArrowDownIcon className="h-4 w-4 ml-1" />
                       )}
                     </div>
@@ -431,116 +431,147 @@ export default function GuardDashboard() {
               <tbody className="bg-white divide-y divide-gray-200">
                 {currentItems.length > 0 ? (
                   currentItems.map((visitor) => (
-                    
-                  <tr key={visitor.id}>
-                    <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
-                      <div className="font-medium text-gray-900">{visitor.visitorName}</div>
-                      <div className="text-gray-500">{visitor.visitorEmail}</div>
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      <div className="font-medium text-gray-900">{visitor.residentName}</div>
-                      <div className="text-gray-500">{visitor.residentEmail}</div>
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm">
-                      <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${getStatusBadgeColor(visitor.status)}`}>
-                        {visitor.status}
-                      </span>
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                      {visitor.inTime ? (
-                        <div className="space-y-2">
-                          <div className="flex flex-row items-center gap-2">
-                            <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">In</span>
-                            <div>
-                              <span className="font-medium">{moment(visitor.inDate).format('DD MMM YYYY')}</span>
-                              {/* <span className="ml-2 text-sm text-gray-500">
+
+                    <tr key={visitor.id}>
+                      <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm sm:pl-6">
+                        <div className="font-medium text-gray-900">{visitor.visitorName}</div>
+                        <div className="text-gray-500">{visitor.visitorEmail}</div>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        <div className="font-medium text-gray-900">{visitor.residentName}</div>
+                        <div className="text-gray-500">{visitor.residentEmail}</div>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm">
+                        <span className={`inline-flex rounded-full px-2 text-xs font-semibold leading-5 ${getStatusBadgeColor(visitor.status)}`}>
+                          {visitor.status}
+                        </span>
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+                        {visitor.inTime ? (
+                          <div className="space-y-2">
+                            <div className="flex flex-row items-center gap-2">
+                              <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">In</span>
+                              <div>
+                                <span className="font-medium">{moment(visitor.inDate).format('DD MMM YYYY')}</span>
+                                {/* <span className="ml-2 text-sm text-gray-500">
                                 
                                 --
                               </span> */}
-                            </div>
-                          </div>
-                          {visitor.outTime && (
-                            <div className="flex flex-row items-center gap-2">
-                              <span className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">Out</span>
-                              <div>
-                                <span className="font-medium">{moment(visitor.outDate).format('DD MMM YYYY')}</span>
-                                {/* <span className="ml-2 text-sm text-gray-500">
-                                  --
-                                </span> */}
                               </div>
                             </div>
-                          )}
-                        </div>
-                      ) : (
-                        <span className="text-gray-400 italic">Not arrived</span>
-                      )}
-                    </td>
-                    <td className="whitespace-nowrap px-3 py-4 text-sm">
-                      <div className="flex items-center space-x-2">
-                        {/* Show verify button for approved visitors who haven't arrived */}
-                        {visitor.status === 'approved' && !visitor.inTime && (
-                          <div className="flex items-center space-x-2">
-                            {selectedVisitor === visitor.id ? (
-                              <>
-                                <input
-                                  type="text"
-                                  value={verificationCode}
-                                  onChange={(e) => setVerificationCode(e.target.value.slice(0, 4))}
-                                  placeholder="4 digits"
-                                  maxLength={4}
-                                  pattern="\d*"
-                                  inputMode="numeric"
-                                  autoFocus
-                                  className="block w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-center font-mono text-lg"
-                                />
-                                <button
-                                  onClick={() => handleVerifyCode(visitor.id)}
-                                  disabled={verifying}
-                                  className="inline-flex items-center rounded border border-transparent bg-indigo-100 px-2.5 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                                >
-                                  {verifying ? 'Verifying...' : 'Verify'}
-                                </button>
-                                <button
-                                  onClick={() => setSelectedVisitor(null)}
-                                  className="inline-flex items-center rounded border border-transparent bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                                >
-                                  Cancel
-                                </button>
-                              </>
-                            ) : (
-                              <button
-                                onClick={() => setSelectedVisitor(visitor.id)}
-                                className="inline-flex items-center rounded border border-transparent bg-indigo-100 px-2.5 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                              >
-                                Enter Code
-                              </button>
+                            {visitor.outTime && (
+                              <div className="flex flex-row items-center gap-2">
+                                <span className="inline-flex items-center rounded-md bg-red-50 px-2 py-1 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">Out</span>
+                                <div>
+                                  <span className="font-medium">{moment(visitor.outDate).format('DD MMM YYYY')}</span>
+                                  {/* <span className="ml-2 text-sm text-gray-500">
+                                  --
+                                </span> */}
+                                </div>
+                              </div>
                             )}
                           </div>
+                        ) : (
+                          <span className="text-gray-400 italic">Not arrived</span>
                         )}
+                      </td>
+                      <td className="whitespace-nowrap px-3 py-4 text-sm">
+                        <div className="flex items-center space-x-2">
+                          {/* Show verify button for approved visitors who haven't arrived */}
+                          {visitor.status === 'approved' && !visitor.inTime && (
+                            <div className="flex items-center space-x-2">
+                              {selectedVisitor === visitor.id ? (
+                                <>
+                                  <input
+                                    type="text"
+                                    value={verificationCode}
+                                    onChange={(e) => setVerificationCode(e.target.value.slice(0, 4))}
+                                    placeholder="4 digits"
+                                    maxLength={4}
+                                    pattern="\d*"
+                                    inputMode="numeric"
+                                    autoFocus
+                                    className="block w-24 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm text-center font-mono text-lg"
+                                  />
+                                  <button
+                                    onClick={() => handleVerifyCode(visitor.id)}
+                                    disabled={verifying}
+                                    className="inline-flex items-center rounded border border-transparent bg-indigo-100 px-2.5 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                  >
+                                    {verifying ? 'Verifying...' : 'Verify'}
+                                  </button>
+                                  <button
+                                    onClick={() => setSelectedVisitor(null)}
+                                    className="inline-flex items-center rounded border border-transparent bg-gray-100 px-2.5 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                                  >
+                                    Cancel
+                                  </button>
+                                </>
+                              ) : (
+                                <button
+                                  onClick={() => setSelectedVisitor(visitor.id)}
+                                  className="inline-flex items-center rounded border border-transparent bg-indigo-100 px-2.5 py-1.5 text-xs font-medium text-indigo-700 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                >
+                                  Enter Code
+                                </button>
+                              )}
+                            </div>
+                          )}
 
-                        {/* Show mark exit button for visitors who are inside */}
-                        {visitor.inTime && !visitor.outTime && (
-                          <button
-                            onClick={() => handleVisitorExit(visitor.id)}
-                            className="inline-flex items-center rounded border border-transparent bg-red-100 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                          >
-                            Mark Exit
-                          </button>
-                        )}
+                          {/* Show mark exit button for visitors who are inside */}
+                          {visitor.inTime && !visitor.outTime && (
+                            <button
+                              onClick={() => handleVisitorExit(visitor.id)}
+                              className="inline-flex items-center rounded border border-transparent bg-red-100 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                            >
+                              Mark Exit
+                            </button>
+                          )}
 
-                        {/* Show status for other cases */}
-                        {(!visitor.status || visitor.status === 'pending') && (
-                          <span className="text-yellow-600">Pending Approval</span>
-                        )}
-                        {visitor.status === 'rejected' && (
-                          <span className="text-red-600">Rejected</span>
-                        )}
-                        {visitor.outTime && (
-                          <span className="text-green-600">Visit Completed</span>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
+                          {/* Show status for other cases */}
+                          {(!visitor.status || visitor.status === 'pending') && (
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await visitorService.updateStatus(visitor.id, 'approved');
+                                    toast.success('Visitor approved successfully!');
+                                    fetchVisitors();
+                                  } catch (err) {
+                                    toast.error('Error approving visitor');
+                                  }
+                                }}
+                                className="inline-flex items-center rounded border border-transparent bg-green-100 px-2.5 py-1.5 text-xs font-medium text-green-700 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                              >
+                                <CheckCircleIcon className="h-4 w-4 mr-1" />
+                                Approve
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    await visitorService.updateStatus(visitor.id, 'rejected');
+                                    toast.success('Visitor rejected');
+                                    fetchVisitors();
+                                  } catch (err) {
+                                    toast.error('Error rejecting visitor');
+                                  }
+                                }}
+                                className="inline-flex items-center rounded border border-transparent bg-red-100 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                              >
+                                <XCircleIcon className="h-4 w-4 mr-1" />
+                                Reject
+                              </button>
+                            </div>
+                          )}
+                          {visitor.status === 'rejected' && (
+                            <span className="text-red-600">Rejected</span>
+                          )}
+                          {visitor.outTime && (
+                            <span className="text-green-600">Visit Completed</span>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
                   ))
                 ) : (
                   <tr>
@@ -575,7 +606,7 @@ export default function GuardDashboard() {
               </tbody>
             </table>
           </div>
-          
+
           {/* Pagination Controls */}
           {filteredAndSearchedVisitors.length > 0 && (
             <div className="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6 mt-4">
@@ -607,11 +638,11 @@ export default function GuardDashboard() {
                       <span className="sr-only">Previous</span>
                       <ChevronLeftIcon className="h-5 w-5" aria-hidden="true" />
                     </button>
-                    
+
                     {/* Page numbers */}
                     {[...Array(Math.min(5, totalPages))].map((_, index) => {
                       let pageNumber;
-                      
+
                       // Calculate which page numbers to show
                       if (totalPages <= 5) {
                         pageNumber = index + 1;
@@ -622,22 +653,21 @@ export default function GuardDashboard() {
                       } else {
                         pageNumber = currentPage - 2 + index;
                       }
-                      
+
                       return (
                         <button
                           key={pageNumber}
                           onClick={() => paginate(pageNumber)}
-                          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${
-                            currentPage === pageNumber
+                          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${currentPage === pageNumber
                               ? 'z-10 bg-indigo-600 text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600'
                               : 'text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
-                          }`}
+                            }`}
                         >
                           {pageNumber}
                         </button>
                       );
                     })}
-                    
+
                     <button
                       onClick={goToNextPage}
                       disabled={currentPage === totalPages}
