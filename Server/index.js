@@ -127,66 +127,64 @@ app.post('/api/visitor-request', async (req, res) => {
       }
     });
 
-    // Send email to resident
+    // Send email to resident (non-blocking)
     if (transporter) {
-      try {
-        const backendUrl = process.env.BACKEND_URL || 'https://ivisitor.onrender.com';
+      const backendUrl = process.env.BACKEND_URL || 'https://ivisitor.onrender.com';
 
-        await transporter.sendMail({
-          from: process.env.EMAIL_USER || 'noreply@ivisitor.com',
-          to: newVisitor.residentEmail,
-          subject: 'New Visitor Request - iVisitor',
-          html: `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: #4F46E5; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
-                .content { background: #f9f9f9; padding: 20px; border: 1px solid #ddd; }
-                .info { margin: 10px 0; }
-                .label { font-weight: bold; color: #555; }
-                .buttons { margin-top: 30px; text-align: center; }
-                .btn { display: inline-block; padding: 12px 30px; margin: 0 10px; text-decoration: none; border-radius: 5px; font-weight: bold; }
-                .btn-approve { background: #10B981; color: white; }
-                .btn-reject { background: #EF4444; color: white; }
-                .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #888; }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <div class="header">
-                  <h2 style="margin: 0;">New Visitor Request</h2>
-                </div>
-                <div class="content">
-                  <div class="info"><span class="label">Visitor Name:</span> ${newVisitor.visitorName}</div>
-                  <div class="info"><span class="label">Visitor Email:</span> ${newVisitor.visitorEmail}</div>
-                  <div class="info"><span class="label">Visit Reason:</span> ${newVisitor.visitReason}</div>
-                  <div class="info"><span class="label">Car Number:</span> ${newVisitor.carNumber || 'Not provided'}</div>
-                  
-                  <div class="buttons">
-                    <a href="${backendUrl}/api/approve/${newVisitor.id}/${approvalToken}" class="btn btn-approve">✓ Approve Visit</a>
-                    <a href="${backendUrl}/api/reject/${newVisitor.id}/${approvalToken}" class="btn btn-reject">✗ Reject Visit</a>
-                  </div>
-                </div>
-                <div class="footer">
-                  <p>This is an automated email from iVisitor Management System</p>
+      // Send email without awaiting to avoid blocking the response
+      transporter.sendMail({
+        from: process.env.EMAIL_USER || 'noreply@ivisitor.com',
+        to: newVisitor.residentEmail,
+        subject: 'New Visitor Request - iVisitor',
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: #4F46E5; color: white; padding: 20px; text-align: center; border-radius: 5px 5px 0 0; }
+              .content { background: #f9f9f9; padding: 20px; border: 1px solid #ddd; }
+              .info { margin: 10px 0; }
+              .label { font-weight: bold; color: #555; }
+              .buttons { margin-top: 30px; text-align: center; }
+              .btn { display: inline-block; padding: 12px 30px; margin: 0 10px; text-decoration: none; border-radius: 5px; font-weight: bold; }
+              .btn-approve { background: #10B981; color: white; }
+              .btn-reject { background: #EF4444; color: white; }
+              .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #888; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h2 style="margin: 0;">New Visitor Request</h2>
+              </div>
+              <div class="content">
+                <div class="info"><span class="label">Visitor Name:</span> ${newVisitor.visitorName}</div>
+                <div class="info"><span class="label">Visitor Email:</span> ${newVisitor.visitorEmail}</div>
+                <div class="info"><span class="label">Visit Reason:</span> ${newVisitor.visitReason}</div>
+                <div class="info"><span class="label">Car Number:</span> ${newVisitor.carNumber || 'Not provided'}</div>
+                
+                <div class="buttons">
+                  <a href="${backendUrl}/api/approve/${newVisitor.id}/${approvalToken}" class="btn btn-approve">✓ Approve Visit</a>
+                  <a href="${backendUrl}/api/reject/${newVisitor.id}/${approvalToken}" class="btn btn-reject">✗ Reject Visit</a>
                 </div>
               </div>
-            </body>
-            </html>
-          `
-        });
-
+              <div class="footer">
+                <p>This is an automated email from iVisitor Management System</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `
+      }).then(() => {
         console.log('Email sent to resident:', newVisitor.residentEmail);
-      } catch (emailErr) {
-        console.error('Failed to send email, but continuing with visitor registration:', emailErr);
-        // Continue with the registration even if email fails
-      }
-    } else {
-      console.log('Email transport not configured, skipping email notification');
+      }).catch(emailErr => {
+        console.error('Failed to send email (non-blocking):', emailErr.message);
+      });
     }
+
+    // Return response immediately without waiting for email
     res.json(newVisitor);
   } catch (err) {
     console.error('Error in visitor-request endpoint:', err);
@@ -402,17 +400,16 @@ app.get('/api/approve/:id/:token', async (req, res) => {
       where: { id: parseInt(id) },
       data: { status: 'approved' }
     });
+    // Send approval email (non-blocking)
     if (transporter) {
-      try {
-        await transporter.sendMail({
-          from: process.env.EMAIL_USER || 'noreply@ivisitor.com',
-          to: visitor.visitorEmail,
-          subject: 'Visit Approved - Verification Code',
-          html: `<h2>Your Visit Has Been Approved!</h2><p>Verification code: <strong style="font-size:24px;color:#10B981">${visitor.verificationCode}</strong></p><p>Show this code to the guard upon arrival.</p>`
-        });
-      } catch (emailErr) {
-        console.error('Failed to send approval email:', emailErr);
-      }
+      transporter.sendMail({
+        from: process.env.EMAIL_USER || 'noreply@ivisitor.com',
+        to: visitor.visitorEmail,
+        subject: 'Visit Approved - Verification Code',
+        html: `<h2>Your Visit Has Been Approved!</h2><p>Verification code: <strong style="font-size:24px;color:#10B981">${visitor.verificationCode}</strong></p><p>Show this code to the guard upon arrival.</p>`
+      }).catch(emailErr => {
+        console.error('Failed to send approval email (non-blocking):', emailErr.message);
+      });
     }
     res.send(successPage('Visitor approved successfully!', `Verification code sent to ${visitor.visitorEmail}`));
   } catch (err) {
@@ -435,17 +432,16 @@ app.get('/api/reject/:id/:token', async (req, res) => {
       where: { id: parseInt(id) },
       data: { status: 'rejected' }
     });
+    // Send rejection email (non-blocking)
     if (transporter) {
-      try {
-        await transporter.sendMail({
-          from: process.env.EMAIL_USER || 'noreply@ivisitor.com',
-          to: visitor.visitorEmail,
-          subject: 'Visit Request Update',
-          html: `<h2>Visit Request Update</h2><p>Your visit request has not been approved at this time.</p>`
-        });
-      } catch (emailErr) {
-        console.error('Failed to send rejection email:', emailErr);
-      }
+      transporter.sendMail({
+        from: process.env.EMAIL_USER || 'noreply@ivisitor.com',
+        to: visitor.visitorEmail,
+        subject: 'Visit Request Update',
+        html: `<h2>Visit Request Update</h2><p>Your visit request has not been approved at this time.</p>`
+      }).catch(emailErr => {
+        console.error('Failed to send rejection email (non-blocking):', emailErr.message);
+      });
     }
     res.send(successPage('Visitor rejected.', `${visitor.visitorName} has been notified.`));
   } catch (err) {
