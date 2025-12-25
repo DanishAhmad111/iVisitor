@@ -1,0 +1,39 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Resident {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(100)
+  email     String   @unique @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+  visitors  Visitor[]
+
+  @@map("residents")
+}
+
+model Visitor {
+  id              Int       @id @default(autoincrement())
+  visitorName     String    @map("visitor_name") @db.VarChar(100)
+  visitorEmail    String    @map("visitor_email") @db.VarChar(100)
+  residentName    String    @map("resident_name") @db.VarChar(100)
+  residentEmail   String    @map("resident_email") @db.VarChar(100)
+  visitReason     String    @map("visit_reason") @db.Text
+  carNumber       String?   @map("car_number") @db.VarChar(20)
+  verificationCode String?   @map("verification_code") @db.VarChar(4)
+  status          String    @default("pending") @db.VarChar(20)
+  approvalToken   String?   @unique @map("approval_token") @db.VarChar(64)
+  inDate          DateTime? @map("in_date") @db.Date
+  inTime          DateTime? @map("in_time") @db.Time(6)
+  outDate         DateTime? @map("out_date") @db.Date
+  outTime         DateTime? @map("out_time") @db.Time(6)
+  createdAt       DateTime  @default(now()) @map("created_at")
+  resident        Resident  @relation(fields: [residentEmail], references: [email])
+
+  @@map("visitors")
+}
