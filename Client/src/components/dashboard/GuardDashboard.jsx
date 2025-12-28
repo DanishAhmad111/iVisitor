@@ -49,11 +49,11 @@ export default function GuardDashboard() {
     try {
       const data = await visitorService.getAll();
       setVisitors(data);
+      setLoading(false);
     } catch (err) {
       toast.error('Error fetching visitors');
       console.error('Error fetching visitors:', err);
     } finally {
-      setLoading(false);
       setRefreshing(false);
     }
   };
@@ -534,11 +534,20 @@ export default function GuardDashboard() {
                               <button
                                 onClick={async () => {
                                   try {
+                                    // Immediately update local state for instant feedback
+                                    setVisitors(prev => prev.map(v =>
+                                      v.id === visitor.id ? { ...v, status: 'approved' } : v
+                                    ));
+
                                     await visitorService.updateStatus(visitor.id, 'approved');
                                     toast.success('Visitor approved successfully!');
+
+                                    // Refresh to get latest data from server
                                     await fetchVisitors();
                                   } catch (err) {
                                     toast.error('Error approving visitor');
+                                    // Revert on error
+                                    await fetchVisitors();
                                   }
                                 }}
                                 className="inline-flex items-center rounded border border-transparent bg-green-100 px-2.5 py-1.5 text-xs font-medium text-green-700 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
@@ -549,11 +558,20 @@ export default function GuardDashboard() {
                               <button
                                 onClick={async () => {
                                   try {
+                                    // Immediately update local state for instant feedback
+                                    setVisitors(prev => prev.map(v =>
+                                      v.id === visitor.id ? { ...v, status: 'rejected' } : v
+                                    ));
+
                                     await visitorService.updateStatus(visitor.id, 'rejected');
                                     toast.success('Visitor rejected');
+
+                                    // Refresh to get latest data from server
                                     await fetchVisitors();
                                   } catch (err) {
                                     toast.error('Error rejecting visitor');
+                                    // Revert on error
+                                    await fetchVisitors();
                                   }
                                 }}
                                 className="inline-flex items-center rounded border border-transparent bg-red-100 px-2.5 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
